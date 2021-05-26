@@ -1,12 +1,41 @@
-import { Heading, Box, Flex, Button, Text } from '@chakra-ui/react';
+import { useState } from 'react';
+import Image from 'next/image';
+import {
+  Heading,
+  Button,
+  Flex,
+  Text,
+  Box,
+  SimpleGrid,
+  useColorModeValue,
+  Wrap,
+  WrapItem,
+  Center,
+  Link,
+} from '@chakra-ui/react';
 
+import SerieCard from 'src/components/SerieCard';
 // import useAuth from 'src/hooks/useAuth';
 import Layout from 'src/components/Layout';
-import { getAllTechnologies } from 'src/lib/dato-cms';
+import Footer from 'src/components/Footer';
+import { getAllTechnologies, getAllSeries } from 'src/lib/dato-cms';
 
 const Cover = ({ technologies }) => {
-  console.log(technologies);
-  const bgColor = '#FFF';
+  const [currentTechnologies, setTechnologies] = useState(technologies);
+  const bgColor = useColorModeValue('#FFFFFF', '#1A202C');
+
+  const handleShowAllTechnologies = () => {
+    const tecs = currentTechnologies.map((t) => {
+      t.defaultVisible = true;
+      return t;
+    });
+    setTechnologies(tecs);
+  };
+
+  const hiddenTechnologies = currentTechnologies?.filter(
+    (t) => !t.defaultVisible,
+  ).length;
+
   return (
     <Box bgColor={bgColor}>
       <Flex justifyContent="center" alignItems="center" py={20}>
@@ -47,31 +76,104 @@ const Cover = ({ technologies }) => {
               Bora começar!
             </Button>
           </Box>
-
-          {technologies.map(t => (
-            
-          ))}
+          <Box>
+            <Wrap>
+              {currentTechnologies
+                ?.filter((f) => f.defaultVisible)
+                ?.map((tech) => (
+                  <WrapItem>
+                    <Center
+                      w="100px"
+                      h="100px"
+                      borderWidth="1px"
+                      borderRadius="lg"
+                      overflow="hidden"
+                      flexDirection="column"
+                    >
+                      <Image
+                        src={tech.logo.url}
+                        alt={tech.name}
+                        width={40}
+                        height={40}
+                        title={tech.name}
+                      />
+                      <Text
+                        fontSize="sm"
+                        textAlign="center"
+                        fontWeight="bold"
+                        mt={2}
+                      >
+                        {tech.name}
+                      </Text>
+                    </Center>
+                  </WrapItem>
+                ))}
+              {hiddenTechnologies > 0 && (
+                <WrapItem>
+                  <Center
+                    w="100px"
+                    h="100px"
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    overflow="hidden"
+                    flexDirection="column"
+                  >
+                    <Link onClick={handleShowAllTechnologies}>
+                      <Text
+                        fontSize="sm"
+                        textAlign="center"
+                        fontWeight="bold"
+                        mt={2}
+                      >
+                        {`+${hiddenTechnologies} outras`}
+                      </Text>
+                    </Link>
+                  </Center>
+                </WrapItem>
+              )}
+            </Wrap>
+          </Box>
         </Flex>
       </Flex>
     </Box>
   );
 };
 
-export default function Home({ technologies }) {
+const Series = ({ series }) => (
+  <Flex id="series" justify="center">
+    <Flex w="full" maxW="1200px" px={[4, 8]} mt={10} direction="column">
+      <Heading mb={4}>Séries</Heading>
+      <SimpleGrid columns={[1, null, 3]} spacing="40px">
+        {series.map((serie) => (
+          <SerieCard serie={serie} key={serie.id} />
+        ))}
+      </SimpleGrid>
+    </Flex>
+  </Flex>
+);
+
+export default function Home({ technologies, series }) {
   // const { user, signin } = useAuth();
 
   return (
     <Layout>
-      <Cover technologies={technologies} />
+      <Box pb={10}>
+        <Cover technologies={technologies} />
+        <Series series={series}/>
+        <Footer />
+      </Box>
     </Layout>
   );
 }
 
 export const getStaticProps = async () => {
   const technologies = await getAllTechnologies();
+  const series = await getAllSeries();
+
   return {
     props: {
       technologies,
+      series,
     },
     revalidate: 120,
   };
